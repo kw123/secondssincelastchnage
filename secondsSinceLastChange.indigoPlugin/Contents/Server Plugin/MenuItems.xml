@@ -1,0 +1,107 @@
+<?xml version="1.0"?>
+<MenuItems>
+    <MenuItem id="defineDeviceStates">
+    <Name>Define Device + States to be tracked</Name>
+    <ConfigUI>
+            <Field id="infoLabel1" type="label">
+                <Label>add/remove devices/states or variable to be tracked, set update frequencies for each</Label>
+            </Field>
+
+
+            <Field   id="device" type="menu" tooltip="you have to click on your choice to signal your entry" >
+                <Label>Select  Device:</Label>
+                <List class="indigo.devices" filter=""  dynamicReload="true"/>
+                <CallbackMethod>pickDeviceCALLBACK</CallbackMethod>
+            </Field>
+
+
+            <Field    id="state"  type="menu" defaultValue="0">
+                <Label>state:</Label>
+                <List class="self" filter="" method="filterStates" dynamicReload="true"/>
+            </Field>
+
+
+            <Field id="checkFrequency" type="menu" defaultValue="60" tooltip="">
+                <List>
+                    <Option value="1"  > 1 Second</Option>
+                    <Option value="2"  > 2 Second </Option>
+                    <Option value="3"  > 3 Second </Option>
+                    <Option value="4"  > 4 Second </Option>
+                    <Option value="5"  > 5 Second </Option>
+                    <Option value="6"  > 6 Second </Option>
+                    <Option value="10" >10 Second </Option>
+                    <Option value="12" >12 Second </Option>
+                    <Option value="15" >15 Second </Option>
+                    <Option value="20" >20 Second </Option>
+                    <Option value="30" >30 Second </Option>
+                    <Option value="60" >60 Second </Option>
+                    <Option value="90" >90 Second </Option>
+                    <Option value="120"> 2 Minutes </Option>
+                    <Option value="180"> 3 Minutes </Option>
+                </List>
+                <Label>UPDATE Value every:</Label>
+            </Field>
+
+            <Field  id="buttonRemove" type="button"	tooltip="This will remove Device/State">
+                <Label>To remove from tracking click....:</Label><Title>REMOVE</Title>
+                <CallbackMethod>buttonRemoveCALLBACK</CallbackMethod>
+            </Field>
+            <Field  id="buttonConfirm" type="button"	tooltip="This will add Device/State">
+                <Label>To Add  to tracking     click....:</Label><Title>CONFIRM</Title>
+                <CallbackMethod>buttonConfirmCALLBACK</CallbackMethod>
+            </Field>
+    </ConfigUI>
+    </MenuItem>
+    
+    <MenuItem id="defineVariables">
+    <Name>Define Variables to be tracked</Name>
+    <ConfigUI>
+            <Field id="infoLabel1" type="label">
+                <Label>add/remove  variable to be tracked, set update frequencies for each</Label>
+            </Field>
+
+            <Field   id="variable" type="menu" tooltip="you have to click on your choice to signal your entry" >
+                <Label>Select  Device:</Label>
+                <List class="indigo.variables" filter=""  dynamicReload="true"/>
+                <CallbackMethod>pickVariableCALLBACK</CallbackMethod>
+            </Field>
+
+            <Field id="checkFrequency" type="menu" defaultValue="60" tooltip="">
+                <List>
+                    <Option value="1"  > 1 Second</Option>
+                    <Option value="2"  > 2 Second </Option>
+                    <Option value="3"  > 3 Second </Option>
+                    <Option value="4"  > 4 Second </Option>
+                    <Option value="5"  > 5 Second </Option>
+                    <Option value="6"  > 6 Second </Option>
+                    <Option value="10" >10 Second </Option>
+                    <Option value="12" >12 Second </Option>
+                    <Option value="15" >15 Second </Option>
+                    <Option value="20" >20 Second </Option>
+                    <Option value="30" >30 Second </Option>
+                    <Option value="60" >60 Second </Option>
+                    <Option value="90" >90 Second </Option>
+                    <Option value="120"> 2 Minutes </Option>
+                    <Option value="180"> 3 Minutes </Option>
+                </List>
+                <Label>UPDATE Value every:</Label>
+            </Field>
+
+            <Field  id="buttonRemove" type="button"	tooltip="This will remove Variable">
+                <Label>To remove from tracking click....:</Label><Title>REMOVE</Title>
+                <CallbackMethod>buttonRemoveVARCALLBACK</CallbackMethod>
+            </Field>
+            <Field  id="buttonConfirm" type="button"	tooltip="This will add Variable">
+                <Label>To Add  to tracking     click....:</Label><Title>CONFIRM</Title>
+                <CallbackMethod>buttonConfirmVARCALLBACK</CallbackMethod>
+            </Field>
+    </ConfigUI>
+    </MenuItem>
+
+    <MenuItem id="printConfig">
+        <Name>print tracking setup to logfile </Name>
+        <CallbackMethod>printConfigCALLBACK</CallbackMethod>
+    </MenuItem>
+    
+
+</MenuItems>
