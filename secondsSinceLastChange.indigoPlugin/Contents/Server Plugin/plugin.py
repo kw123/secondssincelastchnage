@@ -35,9 +35,10 @@ Version="7.6.7"
 
 
 _emptyDev={"states":{}}
-_emptyState={"lastChange":0,"lastCheck":0,"checkFrequency":0,"lastValue":""}
+_emptyState={"lastChange":0,"lastCheck":0,"checkFrequency":0,"lastValue":"", "'checkFrequency": 60, u"previousChange":0}
 
-_emptyVar={"lastValue":{}}
+_emptyVar={"lastChange":0,"lastCheck":0,"checkFrequency":0,"lastValue":"", "'checkFrequency": 60, u"previousChange":0}
+
 
 ################################################################################
 class Plugin(indigo.PluginBase):
@@ -81,13 +82,18 @@ class Plugin(indigo.PluginBase):
 		self.varList				= json.loads(self.pluginPrefs.get("varList","{}"))
 
 		for dd in self.devList:
+			dev = indigo.devices[int(dd)]
 			for ss in self.devList[dd]["states"]:
+				self.createOrConfirmVariablesForDevice(dev,ss)
 				if "previousChange" not in self.devList[dd]["states"][ss]:
 					self.devList[dd]["states"][ss]["previousChange"] =0
 
 		for dd in self.varList:
+			var = indigo.variables[int(dd)]
+			self.createOrConfirmVariablesForVariable(var)
 			if "lastValue" not in self.varList[dd]:
 				self.varList[dd]["lastValue"] = "-1"
+
 	
 		
 
@@ -164,78 +170,65 @@ class Plugin(indigo.PluginBase):
 
 	########################################
 	def variableUpdated(self, origVar, newVar):
-		if self.subscribe !="subscribe": return
-		varstr = str(origVar.id)
-		if varstr not in self.varList: return
+		try:
+			if self.subscribe !="subscribe": return
+			varstr = str(origVar.id)
+			if varstr not in self.varList: return
 
-		now=time.time()
-		sss =self.varList[varstr]
-		varName= origVar.name
-		if self.ML.decideMyLog(u"Subscribe"): self.ML.myLog( text = "checking :"+varName, mType="secs since..Subscribe" )
+			now=time.time()
+			sss =self.varList[varstr]
+			varName= origVar.name
+			if self.ML.decideMyLog(u"Subscribe"): self.ML.myLog( text = "checking variable: "+varName, mType="secs since..Subscribe" )
 
-		if origVar.value != newVar.value: 
-			# change happend for dev/state we asked for, now rest conter ...
-			name = varName.replace(" ","_")
-			variName				= name+"_seconds"
-			variNamePrevious		= name+"_seconds_Previous"
-			variNamePreviousValue	= name+"_previous_Value"
+			if origVar.value != newVar.value: 
+				# change happend for dev/state we asked for, now rest conter ...
+				variName, variNamePrevious, variNamePreviousValue, value = self.createOrConfirmVariablesForVariable(indigo.variables[origVar.id])
 
-			if self.ML.decideMyLog(u"Subscribe"): self.ML.myLog( text = "changed: "+ name+ " : "+str(int(now - sss["lastChange"])), mType="secs since..Subscribe" )
-			try:	vari = indigo.variables[variName]
-			except:	indigo.variable.create(variName,"0",self.variFolderName)
-			try:	variPrevious = indigo.variables[variNamePrevious]
-			except:	indigo.variable.create(variNamePrevious,"0",self.variFolderName)
-			try: 	variPrevious = indigo.variables[variNamePreviousValue]
-			except:	indigo.variable.create(variNamePreviousValue,"0",self.variFolderName)
+				if self.ML.decideMyLog(u"Subscribe"): self.ML.myLog( text = " .. changed from:"+origVar.value+";  to:"+ newVar.value+";  secs_since last change: "+str(int(now - sss["lastChange"])), mType="secs since..Subscribe" )
 
-			indigo.variable.updateValue(variNamePreviousValue, sss["lastValue"] )
-			indigo.variable.updateValue(variNamePrevious, str(int(now - sss["lastChange"])))
-			indigo.variable.updateValue(variName,"0")
-			sss["lastValue"]		= newVar.value
-			sss["previousChange"]	= sss["lastChange"]
-			sss["lastChange"]		= now
-			sss["lastCheck"] 		= now
+				indigo.variable.updateValue(variNamePreviousValue, sss["lastValue"] )
+				indigo.variable.updateValue(variNamePrevious, str(int(now - sss["lastChange"])))
+				indigo.variable.updateValue(variName,"0")
+				sss["lastValue"]		= newVar.value
+				sss["previousChange"]	= sss["lastChange"]
+				sss["lastChange"]		= now
+				sss["lastCheck"] 		= now
+		except	Exception, e:
+				self.ML.myLog( text ="error in Line '%s' ;  error='%s'" % (sys.exc_traceback.tb_lineno, e))
 
 	
 
 	########################################
 	def deviceUpdated(self, origDev, newDev):
-		if self.subscribe !="subscribe": return
-		devstr = str(origDev.id)
-		if devstr not in self.devList: return
+		try:
+			if self.subscribe !="subscribe": return
+			devstr = str(origDev.id)
+			if devstr not in self.devList: return
 
-		now=time.time()
-		ddd =self.devList[devstr]
-		devName= origDev.name
-		if self.ML.decideMyLog(u"Subscribe"): self.ML.myLog( text = "checking :"+devName, mType="secs since..Subscribe" )
+			now=time.time()
+			ddd =self.devList[devstr]
+			devName= origDev.name
+			if self.ML.decideMyLog(u"Subscribe"): self.ML.myLog( text = "checking device :"+devName, mType="secs since..Subscribe" )
+			dev = indigo.devices[origDev.id]
 
-		for state in self.devList[devstr]["states"]:
-			if self.ML.decideMyLog(u"Subscribe"): self.ML.myLog( text = "checking :"+state, mType="secs since..Subscribe" )
-			if state not in newDev.states: continue
-			if origDev.states[state] == newDev.states[state]: continue
-			# change happend for dev/state we asked for, now rest conter ...
-			sss = ddd["states"][state]
-			name					= devName.replace(" ","_")+"_"+state.replace(" ","_")
-			variName				= name+"_seconds"
-			variNamePrevious		= name+"_seconds_Previous"
-			variNamePreviousValue	= name+"_previous_Value"
+			for state in self.devList[devstr]["states"]:
+				if self.ML.decideMyLog(u"Subscribe"): self.ML.myLog( text = ("   state: "+state).ljust(25)+";  old value:"+ unicode(origDev.states[state]), mType="secs since..Subscribe" )
+				if state not in newDev.states: continue
+				if origDev.states[state] == newDev.states[state]: continue
+				# change happend for dev/state we asked for, now rest conter ...
+				variName, variNamePrevious, variNamePreviousValue, value = self.createOrConfirmVariablesForDevice(dev,state)
+				sss = ddd["states"][state]
+				if self.ML.decideMyLog(u"Subscribe"): self.ML.myLog( text = "                           changed to:".ljust(38)+ unicode(newDev.states[state])+";  secs_since last change: "+str(int(now - sss["lastChange"])), mType="secs since..Subscribe" )
 
-			if self.ML.decideMyLog(u"Subscribe"): self.ML.myLog( text = "changed: "+ name+ " : "+str(int(now - sss["lastChange"])) , mType="secs since..Subscribe" )
-
-			try: 	vari = indigo.variables[variName]
-			except:	indigo.variable.create(variName,"0",self.variFolderName)
-			try: 	variPrevious = indigo.variables[variNamePrevious]
-			except:	indigo.variable.create(variNamePrevious,"0",self.variFolderName)
-			try: 	variPrevious = indigo.variables[variNamePreviousValue]
-			except:	indigo.variable.create(variNamePreviousValue,"0",self.variFolderName)
-
-			indigo.variable.updateValue(variNamePrevious, str(int(now - sss["lastChange"])))
-			indigo.variable.updateValue(variNamePreviousValue, sss["lastValue"])
-			indigo.variable.updateValue(variName,"0")
-			sss["lastValue"]		= unicode(newDev.states[state])
-			sss["previousChange"]	= sss["lastChange"]
-			sss["lastChange"]		= now
-			sss["lastCheck"]		= now
+				indigo.variable.updateValue(variNamePrevious, str(int(now - sss["lastChange"])))
+				indigo.variable.updateValue(variNamePreviousValue, sss["lastValue"])
+				indigo.variable.updateValue(variName,"0")
+				sss["lastValue"]		= unicode(newDev.states[state])
+				sss["previousChange"]	= sss["lastChange"]
+				sss["lastChange"]		= now
+				sss["lastCheck"]		= now
+		except	Exception, e:
+				self.ML.myLog( text ="error in Line '%s' ;  error='%s'" % (sys.exc_traceback.tb_lineno, e))
 
 		return
 	
@@ -279,17 +272,17 @@ class Plugin(indigo.PluginBase):
 	def printConfigCALLBACK(self,devstr=""):
 		if len(self.devList)> 0:
 			self.ML.myLog( text ="Configuration")
-			self.ML.myLog( text ="Dev-Name                          State     Parameters ........", mType="DevID")
+			self.ML.myLog( text ="Dev-Name----------       ---------------State  Data----------", mType="DevID")
 			for devid in self.devList:
 				if devid == devstr or devstr=="":
 					for state in self.devList[devid]["states"]:
-						self.ML.myLog( text =  indigo.devices[int(devid)].name.ljust(25) +"; "+state.rjust(20)+" :"+ unicode(self.devList[devid]["states"][state]), mType=devid.ljust(10) )
+						self.ML.myLog( text =  indigo.devices[int(devid)].name.ljust(25) +state.rjust(20)+"  "+ unicode(self.devList[devid]["states"][state]), mType=devid.ljust(10) )
 
 		if len(self.varList)> 0:
 			self.ML.myLog( text ="Configuration")
-			self.ML.myLog( text ="Var-Name", mType="VarID")
+			self.ML.myLog( text ="Var-Name----------".ljust(25)+"  Data-------------", mType="VarID")
 			for varid in self.varList:
-				self.ML.myLog( text =  indigo.variables[int(varid)].name.ljust(25), mType=varid.ljust(10))
+				self.ML.myLog( text =  indigo.variables[int(varid)].name.ljust(25)+"  "+ unicode(self.varList[varid]), mType=varid.ljust(10))
 		
 		return
 	########################################
@@ -331,11 +324,13 @@ class Plugin(indigo.PluginBase):
 		self.devList[devstr]["states"][state]["lastChange"]		= time.time()
 		self.devList[devstr]["states"][state]["lastCheck"]		= 0
 		self.saveNow=True
+		self.createOrConfirmVariablesForDevice(indigo.devices[dev.id],state)
 		
 		self.printConfigCALLBACK(devstr=devstr)
 
 		return valuesDict
 
+		
 	########################################
 	def buttonRemoveCALLBACK(self,valuesDict="",typeId=""):				# Select only device/properties that are supported
 		dev=indigo.devices[int(valuesDict["device"])]
@@ -344,7 +339,9 @@ class Plugin(indigo.PluginBase):
 			state = valuesDict["state"]
 			if	state in self.devList[devstr]["states"]:
 				del self.devList[devstr]["states"][state]
-	
+			if len(self.devList[devstr])==0:
+				del self.devList[devstr]
+			
 		self.printConfigCALLBACK()
 
 		return valuesDict
@@ -359,15 +356,16 @@ class Plugin(indigo.PluginBase):
 		self.varList[varstr]["checkFrequency"]	= int(valuesDict["checkFrequency"])
 		self.varList[varstr]["lastChange"]		= time.time()
 		self.varList[varstr]["lastCheck"]		= 0
+
 		self.saveNow=True
-		
+		self.createOrConfirmVariablesForVariable(indigo.variables[var.id])
 		self.printConfigCALLBACK(devstr=varstr)
 
 		return valuesDict
 
 	########################################
 	def buttonRemoveVARCALLBACK(self,valuesDict="",typeId=""):				# Select only device/properties that are supported
-		var=indigo.vaiables[int(valuesDict["variable"])]
+		var=indigo.variables[int(valuesDict["variable"])]
 		varstr= str(var.id)
 		if varstr in self.varList:
 			del self.varList[varstr]
@@ -376,6 +374,33 @@ class Plugin(indigo.PluginBase):
 
 		return valuesDict
 
+	########################################
+	def createOrConfirmVariablesForDevice(self,dev,state):
+		name					= dev.name.replace(" ","_")+"_"+state.replace(" ","_")
+		variName				= name+"_seconds_since_change"
+		variNamePrevious		= name+"_seconds_previous_change"
+		variNamePreviousValue	= name+"_previous_value"
+		try: 	indigo.variable.create(variName,"0",self.variFolderName)
+		except: pass
+		try: 	indigo.variable.create(variNamePrevious,"0",self.variFolderName)
+		except: pass
+		try: 	indigo.variable.create(variNamePreviousValue,str(dev.states[state]),self.variFolderName)
+		except: pass
+		return variName, variNamePrevious, variNamePreviousValue, unicode(dev.states[state])
+		
+	########################################
+	def createOrConfirmVariablesForVariable(self,var):
+		name					= var.name
+		variName				= name+"_seconds_since_change"
+		variNamePrevious		= name+"_seconds_previous_change"
+		variNamePreviousValue	= name+"_previous_value"
+		try: 	indigo.variable.create(variName,"0",self.variFolderName)
+		except: pass
+		try: 	indigo.variable.create(variNamePrevious,"0",self.variFolderName)
+		except: pass
+		try: 	indigo.variable.create(variNamePreviousValue,var.value,self.variFolderName)
+		except: pass
+		return variName, variNamePrevious, variNamePreviousValue, var.value
 
 
 	########### main loop -- start #########
@@ -399,11 +424,11 @@ class Plugin(indigo.PluginBase):
 				for devID in self.devList:
 					if int(devID) >0:
 						try:
-							devName= indigo.devices[int(devID)].name
+							dev= indigo.devices[int(devID)]
 						except Exception, e:
 						   if unicode(e).find("timeout") >-1: self.sleep(5)
 						try:
-							devName = indigo.devices[int(devID)].name
+							dev = indigo.devices[int(devID)]
 						except:
 								self.ML.myLog( text =" error; device with indigoID = "+ str(devID) +" does not exist, removing from tracking")
 								delList.append(devID)
@@ -412,37 +437,22 @@ class Plugin(indigo.PluginBase):
 					ddd =self.devList[devID]
 					for state in ddd["states"]:
 						sss = ddd["states"][state]
-						name					= devName.replace(" ","_")+"_"+state.replace(" ","_")
-						variName				= name+"_seconds"
-						variNamePrevious		= name+"_seconds_Previous"
-						variNamePreviousValue	= name+"_previous_Value"
+						variName, variNamePrevious, variNamePreviousValue, value = self.createOrConfirmVariablesForDevice(dev,state)
 						
-						if self.ML.decideMyLog(u"Logic"): self.ML.myLog( text = "name: "+name, mType="secs since.. Logic" )
-						if self.ML.decideMyLog(u"Logic"): self.ML.myLog( text = str(sss["lastCheck"])+ " + "+str(sss["checkFrequency"])+" < " +str(now), mType="secs since.. Logic" )
+						if self.ML.decideMyLog(u"Logic"): self.ML.myLog( text = "name: "+dev.name+ "... lastCheck+checkFrequency: "+str(sss["lastCheck"])+ " + "+str(sss["checkFrequency"])+" < " +str(now)+"now", mType="secs since.. Logic" )
 						if self.subscribe != "subscribe":
-							if not( (sss["lastCheck"] + sss["checkFrequency"]) < now or indigo.devices[int(devID)].states[state] != sss["lastValue"]) : continue
+							if not( (sss["lastCheck"] + sss["checkFrequency"]) < now or value != sss["lastValue"]) : continue
 						elif  not ( (sss["lastCheck"] + sss["checkFrequency"]) < now ) : continue
 						
 						sss["lastCheck"] = now
-						if self.ML.decideMyLog(u"Logic"): self.ML.myLog( text = variName+ " : "+unicode(ddd))
-						try:
-							vari = indigo.variables[variName]
-						except:
-							indigo.variable.create(variName,"0",self.variFolderName)
-							vari = indigo.variables[variName]
-						Value= vari.value
+						if self.ML.decideMyLog(u"Logic"): self.ML.myLog( text = " ... data: "+unicode(ddd))
 						
-						try:
-							variPrevious = indigo.variables[variNamePrevious]
-						except:
-							indigo.variable.create(variNamePrevious,"0",self.variFolderName)
-							variPrevious = indigo.variables[variNamePrevious]
 
-						if indigo.devices[int(devID)].states[state] != sss["lastValue"]:
+						if value != sss["lastValue"]:
 							indigo.variable.updateValue(variNamePreviousValue, sss["lastValue"] )
 							indigo.variable.updateValue(variName,"0")
 							indigo.variable.updateValue(variNamePrevious, str(int(now-float(sss["lastChange"]))) )
-							sss["lastValue"]		= unicode(indigo.devices[int(devID)].states[state])
+							sss["lastValue"]		= value
 							sss["previousChange"]	= sss["lastChange"]
 							sss["lastChange"]		= now
 						elif (sss["lastChange"] + sss["checkFrequency"]) < now :
@@ -456,11 +466,11 @@ class Plugin(indigo.PluginBase):
 				for varID in self.varList:
 					if int(varID) >0:
 						try:
-							varName= indigo.variables[int(varID)].name
+							var= indigo.variables[int(varID)]
 						except Exception, e:
 						   if unicode(e).find("timeout") >-1: self.sleep(5)
 						try:
-							varName = indigo.variables[int(varID)].name
+							var = indigo.variables[int(varID)]
 						except:
 								self.ML.myLog( text =" error; varibale with indigoID = "+ str(varID) +" does not exist, removing from tracking")
 								delList.append(varID)
@@ -468,39 +478,22 @@ class Plugin(indigo.PluginBase):
 							   
 					sss =self.varList[varID]
 					if True:
-						name = varName.replace(" ","_")
-						variName				= name+"_seconds"
-						variNamePrevious		= name+"_seconds_Previous"
-						variNamePreviousValue	= name+"_previous_Value"
+						variName, variNamePrevious, variNamePreviousValue, value = self.createOrConfirmVariablesForVariable(var)
 						
-						if self.ML.decideMyLog(u"Logic"): self.ML.myLog( text = "variName "+variName+" "+variNamePrevious, mType="secs since.. Logic")
-						if self.ML.decideMyLog(u"Logic"): self.ML.myLog( text = str(sss["lastCheck"])+ " + "+str(sss["checkFrequency"])+" < " +str(now), mType="secs since.. Logic")
+						if self.ML.decideMyLog(u"Logic"): self.ML.myLog( text = "variName: "+variName+ " ... lastCheck+checkFrequency: "+str(sss["lastCheck"])+ " + "+str(sss["checkFrequency"])+" < " +str(now)+"now", mType="secs since.. Logic" )
 						if self.subscribe != "subscribe":
-							if not( (sss["lastCheck"] + sss["checkFrequency"]) < now or indigo.variables[int(varID)].value != sss["lastValue"]) : continue
+							if not( (sss["lastCheck"] + sss["checkFrequency"]) < now or value != sss["lastValue"]) : continue
 						elif  not ( (sss["lastCheck"] + sss["checkFrequency"]) < now ) : continue
 						
 						sss["lastCheck"] = now
-						if self.ML.decideMyLog(u"Logic"): self.ML.myLog( text = variName+ " : "+unicode(sss), mType="secs since.. Logic")
-						try: 	vari = indigo.variables[variName]
-						except:
-							indigo.variable.create(variName,"0",self.variFolderName)
-							vari = indigo.variables[variName]
-						Value= vari.value
+						if self.ML.decideMyLog(u"Logic"): self.ML.myLog( text = " ...  data : "+unicode(sss), mType="secs since.. Logic")
 						
-						try: 	variPrevious = indigo.variables[variNamePrevious]
-						except:
-							indigo.variable.create(variNamePrevious,"0",self.variFolderName)
-							variPrevious = indigo.variables[variNamePrevious]
-						try: 	variPrevious = indigo.variables[variNamePreviousValue]
-						except:
-							indigo.variable.create(variNamePreviousValue,"0",self.variFolderName)
-							variPrevious = indigo.variables[variNamePreviousValue]
 
-						if indigo.variables[int(varID)].value != sss["lastValue"]:
+						if value != sss["lastValue"]:
 							indigo.variable.updateValue(variNamePreviousValue, sss["lastValue"] )
 							indigo.variable.updateValue(variName,"0")
 							indigo.variable.updateValue(variNamePrevious, str(int(now-float(sss["lastChange"]))) )
-							sss["lastValue"]		= indigo.variables[int(varID)].value
+							sss["lastValue"]		= value
 							sss["previousChange"]	= sss["lastChange"]
 							sss["lastChange"]		= now
 						elif (sss["lastChange"] + sss["checkFrequency"]) < now :
