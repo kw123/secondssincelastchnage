@@ -16,6 +16,7 @@ try:
 	unicode("x")
 except:
 	unicode = str
+import traceback
 
 
 
@@ -191,7 +192,7 @@ class Plugin(indigo.PluginBase):
 				sss[u"lastChange"]		= now
 				sss[u"lastCheck"] 		= now
 		except	Exception as e:
-				self.ML.myLog( text = u"error in Line '%s' ;  error='%s'" % (sys.exc_info()[2].tb_lineno, e))
+			self.exceptionHandler(40,e)
 
 	
 
@@ -225,7 +226,7 @@ class Plugin(indigo.PluginBase):
 				sss[u"lastChange"]		= now
 				sss[u"lastCheck"]		= now
 		except	Exception as e:
-				self.ML.myLog( text = u"error in Line '%s' ;  error='%s'" % (sys.exc_info()[2].tb_lineno, e))
+			self.exceptionHandler(40,e)
 
 		return
 	
@@ -411,8 +412,7 @@ class Plugin(indigo.PluginBase):
 			except: pass
 			return variName, variNamePrevious, variNamePreviousValue, var.value
 		except	Exception as e:
-			if len(unicode(e)) > 5:
-				self.ML.myLog( text =u"error in Line '%s' ;  error='%s'" % (sys.exc_info()[2].tb_lineno, e))
+			self.exceptionHandler(40,e)
 		return "","","",""
 
 	########### main loop -- start #########
@@ -484,7 +484,7 @@ class Plugin(indigo.PluginBase):
 						try:
 							var = indigo.variables[int(varID)]
 						except:
-								self.ML.myLog( text =u" error; varibale with indigoID = "+ str(varID) +" does not exist, removing from tracking")
+								self.exceptionHandler(40,e)
 								delList.append(varID)
 								continue
 							   
@@ -521,12 +521,35 @@ class Plugin(indigo.PluginBase):
 			serverPlugin.restart(waitUntilDone=False)
 			self.sleep(1)
 		except	Exception as e:
-			if len(unicode(e)) > 5:
-				self.ML.myLog( text = u"error in Line '%s' ;  error='%s'" % (sys.exc_info()[2].tb_lineno, e))
+			self.exceptionHandler(40,e)
 		self.pluginPrefs[u"devList"] =json.dumps(self.devList)
 		self.pluginPrefs[u"varList"] =json.dumps(self.varList)
 		self.quitNow ==""
 		return
+
+
+
+
+####-----------------  exception logging ---------
+	def exceptionHandler(self, level, exception_error_message):
+
+		try:
+			try: 
+				if u"{}".format(exception_error_message).find("None") >-1: return exception_error_message
+			except: 
+				pass
+
+			filename, line_number, method, statement = traceback.extract_tb(sys.exc_info()[2])[-1]
+			#module = filename.split('/')
+			log_message = "'{}'".format(exception_error_message )
+			log_message +=  "\n{} @line {}: '{}'".format(method, line_number, statement)
+			if level > 0:
+				self.errorLog(log_message)
+			return "'{}'".format(log_message )
+		except Exception as e:
+			indigo.server.log( "{}".format(e))
+
+
 
 
 
