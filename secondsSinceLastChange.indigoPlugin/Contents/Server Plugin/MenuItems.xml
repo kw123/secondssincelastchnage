@@ -47,8 +47,8 @@
                 <CallbackMethod>buttonRemoveCALLBACK</CallbackMethod>
             </Field>
             <Field  id="buttonConfirm" type="button"	tooltip="This will add Device/State">
-                <Label>To Add  to tracking     click....:</Label><Title>CONFIRM</Title>
-                <CallbackMethod>buttonConfirmCALLBACK</CallbackMethod>
+                <Label>To Add  to tracking     click....:</Label><Title>ADD</Title>
+                <CallbackMethod>buttonAddCALLBACK</CallbackMethod>
             </Field>
     </ConfigUI>
     </MenuItem>
@@ -61,7 +61,7 @@
             </Field>
 
             <Field   id="variable" type="menu" tooltip="you have to click on your choice to signal your entry" >
-                <Label>Select  Device:</Label>
+                <Label>Select  Variable:</Label>
                 <List class="indigo.variables" filter=""  dynamicReload="true"/>
                 <CallbackMethod>pickVariableCALLBACK</CallbackMethod>
             </Field>
@@ -92,8 +92,8 @@
                 <CallbackMethod>buttonRemoveVARCALLBACK</CallbackMethod>
             </Field>
             <Field  id="buttonConfirm" type="button"	tooltip="This will add Variable">
-                <Label>To Add  to tracking     click....:</Label><Title>CONFIRM</Title>
-                <CallbackMethod>buttonConfirmVARCALLBACK</CallbackMethod>
+                <Label>To Add  to tracking     click....:</Label><Title>ADD</Title>
+                <CallbackMethod>buttonAddVARCALLBACK</CallbackMethod>
             </Field>
     </ConfigUI>
     </MenuItem>
