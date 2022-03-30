@@ -3,8 +3,6 @@ dded features / changes in v7.2.10 @ 2022-03-30
 
 1. prep for py3
 
-
-
 Added features / changes in v7.1.10 @ 2020-02-20
 ===================================================
 
