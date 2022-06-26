@@ -1,7 +1,16 @@
-dded features / changes in v7.2.10 @ 2022-03-30
+Added features / changes in v2022.1.11 @ 2020-06-26
 ===================================================
 
-1. prep for py3
+1. made fully indigo 2022 compatible, ie runs under py3
+2. added new name convetion for variables
+   deviceName__stateName__measurement
+changed from
+   deviceNem_StateName_Measuerment
+
+as device name etc can contain some "_" then it is clear whre device name and sstate names begin ie separated by __ not by a single _
+
+3. fixed / added some menu clarification.
+
 
 Added features / changes in v7.1.10 @ 2020-02-20
 ===================================================

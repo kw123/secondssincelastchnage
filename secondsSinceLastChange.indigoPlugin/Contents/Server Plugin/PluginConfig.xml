@@ -4,36 +4,50 @@
         <Label>secondsSinceLastChange Plugin                          Developed by Karl Wachs</Label>
     </Field>
     <Field id="infoLabel2" type="label">
-        <Label>tests selected devices/states for any chnage. Creates/updates variables with #seconds since last change of device/state</Label>
+        <Label>This plugin tests selected devices/states for any change. 
+Creates/updates variables with #seconds since last change of device/state
+and and previous state value eg:
+  deviceName__stateName__seconds_since_last_change
+  deviceName__stateName__seconds_since_previous_change
+  deviceName__stateName__previous_value
+  with 2 __ between devicename statename and measurement
+  spaces in device names/states will be replaced with _ as that creates some problems
+
+It gets tested / updated:
+ "Every xx secs" 
+or when 
+  "Subscribe to changes" active when ever a device/state or variable changes
+In "Subscribe mode" Indigo calls plugin whenever ANY device/state changes, that might put some load on the server
+</Label>
     </Field>
     
     <Field id="simpleSeparator11" type="separator"/>
 
 
-<Field id="loopTest"  type="menu" defaultValue="2" tooltip=" this is the sleep time  in loop / between actions">
+<Field id="loopTest"  type="menu" defaultValue="5" tooltip=" this is the sleep time in loop between tests of state values and timestamp updates">
     <List>
-        <Option value="0.5"  > 0.5 Seconds</Option>
-        <Option value="1"    > 1   Seconds</Option>
         <Option value="2"    > 2   Seconds</Option>
         <Option value="3"    > 3   Seconds</Option>
         <Option value="4"    > 4   Seconds</Option>
         <Option value="5"    > 5   Seconds</Option>
         <Option value="10"   >10   Seconds</Option>
+        <Option value="15"   >15   Seconds</Option>
+        <Option value="20"   >20   Seconds</Option>
     </List>
-    <Label>test conditions every:</Label>
+    <Label>Test conditions every:</Label>
 </Field>
 
-<Field id="variFolderName"  type="textfield" defaultValue="" >
-    <Label>Name of folder for output variables :</Label>
+<Field id="variFolderName"  type="textfield" defaultValue="Seconds Since Last Change" >
+    <Label>Name of folder for variables:</Label>
 </Field>
 
 
-<Field id="subscribe"  type="menu" defaultValue="loop" tooltip="Subscription: indigo calls plugin when !!ANY!! device changed, Query: every xx seconds query device/state for changes, then update variable">
+<Field id="subscribe"  type="menu" defaultValue="loop" tooltip="Subscription: indigo calls plugin when devices change any state value, or Every xx seconds: query device/state for changes, then update variables">
     <List>
-        <Option value="subscribe"  >Subscription to changes, indigo calls plugin when any dev/state changed</Option>
-        <Option value="loop"       >Query selected devices/states in loop</Option>
+        <Option value="subscribe"  >Subscribe to changes, and Every xx secs</Option>
+        <Option value="loop"       >Every xx secs</Option>
     </List>
-    <Label>How to track changes : </Label>
+    <Label>Debug areas:</Label>
 </Field>
 
     <Field    id="debugLogic"         type="checkbox"  defaultValue="false"       tooltip=""> <Label> Debug...                      ...(1) Logic:</Label>  </Field>
@@ -42,13 +56,6 @@
     <Field    id="debugall"           type="checkbox"  defaultValue="false"       tooltip=""> <Label>...(9) all of the above .. everything:</Label>  </Field>
     <Field    id="debugSpecial"       type="checkbox"  defaultValue="false"       tooltip=""> <Label>...(s) special debug (only for development):</Label>  </Field>
 
-    <Field    id="logFileActive2"      type="menu"      defaultValue="standard"      > <Label> send logs to ..:</Label>
-        <List>
-            <Option value="standard" > no special unifi logfile, std indigo logfile</Option>
-            <Option value="user"     > ~/indigo/seconds..../change.log                    </Option>
-            <Option value="indigo"   > .. Perceptive Automation/Indigo x/Logs/com.karlwachs.seconds.../plugin.log </Option>
-        </List>
-    </Field>
 
 
 </PluginConfig>
