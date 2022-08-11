@@ -42,13 +42,23 @@ In "Subscribe mode" Indigo calls plugin whenever ANY device/state changes, that 
 </Field>
 
 
+<Field id="extraUnderscore"  type="menu" defaultValue="1" >
+    <List>
+        <Option value="1"  >only 1 _ </Option>
+        <Option value="2" > use 2 __</Option>
+    </List>
+    <Label>add extra _ between dev_name state and measure:</Label>
+</Field>
+
+
 <Field id="subscribe"  type="menu" defaultValue="loop" tooltip="Subscription: indigo calls plugin when devices change any state value, or Every xx seconds: query device/state for changes, then update variables">
     <List>
         <Option value="subscribe"  >Subscribe to changes, and Every xx secs</Option>
-        <Option value="loop"       >Every xx secs</Option>
+        <Option value="loop"       >Every xx secs, set in "Test conditions .."</Option>
     </List>
-    <Label>Debug areas:</Label>
+    <Label>subscribe to changes OR probe every xx secs:</Label>
 </Field>
+    <Field id="simpleSeparator12" type="separator"/>
 
     <Field    id="debugLogic"         type="checkbox"  defaultValue="false"       tooltip=""> <Label> Debug...                      ...(1) Logic:</Label>  </Field>
     <Field    id="debugConfig"        type="checkbox"  defaultValue="false"       tooltip=""> <Label>...(2) config:</Label>  </Field>

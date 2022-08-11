@@ -1,3 +1,10 @@
+Added features / changes in v2022.1.12 @ 2020-08-11
+===================================================
+
+1. made  the extra double __ instead of one _ between names optional.
+   set in config 
+
+
 Added features / changes in v2022.1.11 @ 2020-06-26
 ===================================================
 

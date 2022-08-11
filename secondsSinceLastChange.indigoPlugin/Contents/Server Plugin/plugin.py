@@ -131,6 +131,7 @@ class Plugin(indigo.PluginBase):
 		self.loopTest				= float(self.pluginPrefs.get("loopTest",2.0))
 		self.subscribe				= self.pluginPrefs.get("subscribe","loop")
 		self.variFolderName			= self.pluginPrefs.get("variFolderName","Seconds")
+		self.extraUnderscore		= self.pluginPrefs.get("variFolderName","1")
 		self.devList				= json.loads(self.pluginPrefs.get("devList","{}"))
 		self.varList				= json.loads(self.pluginPrefs.get("varList","{}"))
 
@@ -271,6 +272,8 @@ class Plugin(indigo.PluginBase):
 		self.debugLevel = []
 		for d in self.debugOptions:
 			if valuesDict[ "debug"+d] : self.debugLevel.append(d)
+
+		self.extraUnderscore = valuesDict.get("extraUnderscore","1")
 
 		xx = valuesDict["subscribe"]
 		if xx != self.subscribe:
@@ -420,25 +423,44 @@ class Plugin(indigo.PluginBase):
 
 	########################################
 	def createOrConfirmVariablesForDevice(self,dev,state):
-		name					= dev.name.strip().replace(" ","_")+"__"+state.replace(" ","_")
-		variName				= name+"__seconds_since_change"
-		variNamePrevious		= name+"__seconds_previous_change"
-		variNamePreviousValue	= name+"__previous_value"
+		if self.extraUnderscore == "2":
+			name					= dev.name.strip().replace(" ","_")+"__"+state.replace(" ","_")
+			variName				= name+"__seconds_since_change"
+			variNamePrevious		= name+"__seconds_previous_change"
+			variNamePreviousValue	= name+"__previous_value"
+		else:
+			name					= dev.name.strip().replace(" ","_")+"_"+state.replace(" ","_")
+			variName				= name+"_seconds_since_change"
+			variNamePrevious		= name+"_seconds_previous_change"
+			variNamePreviousValue	= name+"_previous_value"
+
 		try: 	indigo.variable.create(variName,"0",self.variFolderName)
 		except: pass
 		try: 	indigo.variable.create(variNamePrevious,"0",self.variFolderName)
 		except: pass
 		try: 	indigo.variable.create(variNamePreviousValue,"{}".format(dev.states[state]),self.variFolderName)
 		except: pass
-		return variName, variNamePrevious, variNamePreviousValue, "{}".format(dev.states[state])
+		try:	newValue = "{}".format(dev.states[state])
+		except: pass
+		#self.indiLOG.log(20,"{}-{} gives:{} ..\n states:{}".format(dev.id, state, newValue, dev.states))
+		
+		return variName, variNamePrevious, variNamePreviousValue, newValue
 		
 	########################################
 	def createOrConfirmVariablesForVariable(self,var):
 		try:
-			name					= var.name.strip().replace(" ","_")
-			variName				= name+"__seconds_since_change"
-			variNamePrevious		= name+"__seconds_previous_change"
-			variNamePreviousValue	= name+"__previous_value"
+			if self.extraUnderscore == "2":
+				name					= var.name.strip().replace(" ","_")
+				variName				= name+"__seconds_since_change"
+				variNamePrevious		= name+"__seconds_previous_change"
+				variNamePreviousValue	= name+"__previous_value"
+			else:
+				name					= var.name.strip().replace(" ","_")
+				variName				= name+"_seconds_since_change"
+				variNamePrevious		= name+"_seconds_previous_change"
+				variNamePreviousValue	= name+"_previous_value"
+
+
 			try: 	indigo.variable.create(variName,"0",self.variFolderName)
 			except: pass
 			try: 	indigo.variable.create(variNamePrevious,"0",self.variFolderName)
