@@ -232,23 +232,29 @@ class Plugin(indigo.PluginBase):
 			if devstr not in self.devList: return
 
 			now=time.time()
-			ddd =self.devList[devstr]
+			ddd = self.devList[devstr]
 			devName= origDev.name
 			if self.decideMyLog("Subscribe"): self.indiLOG.log(20,"Subscribe checking device :\"{}\" .. ".format(devName) )
 			dev = indigo.devices[origDev.id]
 
 			for state in self.devList[devstr]["states"]:
-				if state not in newDev.states: continue
-				if origDev.states[state] == newDev.states[state]: continue
-				# change happend for dev/state we asked for, now rest conter ...
-				variName, variNamePrevious, variNamePreviousValue, value = self.createOrConfirmVariablesForDevice(dev,state)
-				sss = ddd["states"][state]
-				if self.decideMyLog("Subscribe"): self.indiLOG.log(20,"...  state:\"{}\"  changed from:\"{}\", to:\"{}\", secs_since last change: {}".format(state, origDev.states[state],  newDev.states[state], int(now - sss["lastChange"])))
+				if state == "lastChanged":
+					variName, variNamePrevious, variNamePreviousValue, value = self.createOrConfirmVariablesForDevice(dev,"lastChanged")
+					sss = ddd["states"][state]
+					newState = newDev.lastChanged
+				else:
+					if state not in newDev.states: continue
+					if origDev.states[state] == newDev.states[state]: continue
+					# change happend for dev/state we asked for, now rest conter ...
+					variName, variNamePrevious, variNamePreviousValue, value = self.createOrConfirmVariablesForDevice(dev,state)
+					sss = ddd["states"][state]
+					newState = newDev.states[state]
+					if self.decideMyLog("Subscribe"): self.indiLOG.log(20,"...  state:\"{}\"  changed from:\"{}\", to:\"{}\", secs_since last change: {}".format(state, origDev.states[state],  newDev.states[state], int(now - sss["lastChange"])))
 
 				indigo.variable.updateValue(variNamePrevious, "{}".format(int(now - sss["lastChange"])))
 				indigo.variable.updateValue(variNamePreviousValue, sss["lastValue"])
 				indigo.variable.updateValue(variName,"0")
-				sss["lastValue"]		= "{}".format(newDev.states[state])
+				sss["lastValue"]		= "{}".format(newState)
 				sss["previousChange"]	= sss["lastChange"]
 				sss["lastChange"]		= now
 				sss["lastCheck"]		= now
@@ -346,6 +352,12 @@ class Plugin(indigo.PluginBase):
 				retList.append((state, "remove: "+state))
 			else:
 				retList.append((state, "add: "+state))
+		state = "lastChanged"
+		if check and state in self.devList[devstr]["states"]:
+				retList.append((state, "remove: "+state))
+		else:
+				retList.append((state, "add: "+state))
+
 		return retList
 
 
@@ -434,14 +446,26 @@ class Plugin(indigo.PluginBase):
 			variNamePrevious		= name+"_seconds_previous_change"
 			variNamePreviousValue	= name+"_previous_value"
 
-		try: 	indigo.variable.create(variName,"0",self.variFolderName)
-		except: pass
-		try: 	indigo.variable.create(variNamePrevious,"0",self.variFolderName)
-		except: pass
-		try: 	indigo.variable.create(variNamePreviousValue,"{}".format(dev.states[state]),self.variFolderName)
-		except: pass
-		try:	newValue = "{}".format(dev.states[state])
-		except: pass
+		if state == "lastChanged":
+			try: 	indigo.variable.create(variName,"0",self.variFolderName)
+			except: pass
+			try: 	indigo.variable.create(variNamePrevious,"0",self.variFolderName)
+			except: pass
+			try: 	indigo.variable.create(variNamePreviousValue,"{}".format(dev.lastChanged),self.variFolderName)
+			except: pass
+			try:	newValue = "{}".format(dev.lastChanged)
+			except: pass
+
+		else:
+
+			try: 	indigo.variable.create(variName,"0",self.variFolderName)
+			except: pass
+			try: 	indigo.variable.create(variNamePrevious,"0",self.variFolderName)
+			except: pass
+			try: 	indigo.variable.create(variNamePreviousValue,"{}".format(dev.states[state]),self.variFolderName)
+			except: pass
+			try:	newValue = "{}".format(dev.states[state])
+			except: pass
 		#self.indiLOG.log(20,"{}-{} gives:{} ..\n states:{}".format(dev.id, state, newValue, dev.states))
 		
 		return variName, variNamePrevious, variNamePreviousValue, newValue
